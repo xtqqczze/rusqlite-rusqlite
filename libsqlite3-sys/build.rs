@@ -1,6 +1,36 @@
 use std::env;
 use std::path::Path;
 
+// Because `cfg_select` requires Rust version 1.95 and we support older versions,
+// we use the following replacement until that is no longer true.
+// FIXME(msrv)
+#[allow(unused_macros)]
+macro_rules! cfg_select {
+    ({ $($tt:tt)* }) => {{
+        cfg_select! { $($tt)* }
+    }};
+    (_ => { $($output:tt)* }) => {
+        $($output)*
+    };
+    (
+        $cfg:meta => $output:tt
+        $($( $rest:tt )+)?
+    ) => {{
+        {
+            #[cfg($cfg)]
+            {
+                cfg_select! { _ => $output }
+            }
+            $(
+                #[cfg(not($cfg))]
+                {
+                    cfg_select! { $($rest)+ }
+                }
+            )?
+        }
+    }}
+}
+
 #[cfg(all(feature = "loadable_extension", feature = "preupdate_hook"))]
 compile_error!(
     "feature \"loadable_extension\" and feature \"preupdate_hook\" cannot be enabled at the same time"

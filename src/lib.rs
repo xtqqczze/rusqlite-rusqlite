@@ -54,6 +54,38 @@
 #![warn(missing_docs)]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
+// Because `cfg_select` requires Rust version 1.95 and we support older versions,
+// we use the following replacement until that is no longer true.
+// FIXME(msrv)
+#[doc(hidden)]
+#[allow(missing_docs)]
+#[macro_export]
+macro_rules! cfg_select {
+    ({ $($tt:tt)* }) => {{
+        $crate::cfg_select! { $($tt)* }
+    }};
+    (_ => { $($output:tt)* }) => {
+        $($output)*
+    };
+    (
+        $cfg:meta => $output:tt
+        $($( $rest:tt )+)?
+    ) => {{
+        {
+            #[cfg($cfg)]
+            {
+                $crate::cfg_select! { _ => $output }
+            }
+            $(
+                #[cfg(not($cfg))]
+                {
+                    $crate::cfg_select! { $($rest)+ }
+                }
+            )?
+        }
+    }}
+}
+
 pub use fallible_iterator;
 pub use fallible_streaming_iterator;
 

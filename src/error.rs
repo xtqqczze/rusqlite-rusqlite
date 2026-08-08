@@ -472,7 +472,8 @@ pub unsafe fn decode_result_raw(db: *mut ffi::sqlite3, code: c_int) -> Result<()
 pub unsafe fn error_with_offset(db: *mut ffi::sqlite3, code: c_int, sql: &str) -> Error {
     unsafe {
         cfg_select! {
-          feature = "modern_sqlite" => // SQLite >= 3.38.0
+          feature = "modern_sqlite" => {
+              // SQLite >= 3.38.0
               if db.is_null() {
                   error_from_sqlite_code(code, None)
               } else {
@@ -491,7 +492,10 @@ pub unsafe fn error_with_offset(db: *mut ffi::sqlite3, code: c_int, sql: &str) -
                   }
                   Error::SqliteFailure(error, msg)
               }
-          _ => error_from_handle(db, code)
+          }
+          _ => {
+              error_from_handle(db, code)
+          }
         }
     }
 }
